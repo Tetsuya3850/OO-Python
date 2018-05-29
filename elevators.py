@@ -5,110 +5,166 @@ from enum import Enum
 from threading import Timer
 
 
-class Direction(Enum):
+class Operation(Enum):
     IDLE = 0
     UP = 1
     DOWN = 2
 
 
 class User:
-    def __init__(self, floor, elevator_manager):
+    def __init__(self, floor):
         self.floor = floor
-        self.elevator_manager = elevator_manager
-        self.request_direction = None
-        self.request_floor = None
-        self.onboard = None
+        self.dest = None
 
-    def request_elevator(self):
-        print("Choose up or down")
+    def choose_direction(self):
+        print("Choose UP or DOWN")
         UP_OR_DOWN = input()
-        if UP_OR_DOWN.upper() == 'UP':
-            self.request_direction = Direction.UP
+        return UP_OR_DOWN
+
+    def choose_dest(self, elevator):
+        print("Which floor to go?")
+        dest = int(input())
+        self.dest = dest
+        elevator.add_request(dest)
+
+    def arrive(self, floor):
+        self.floor = floor
+        self.dest = None
+
+
+class Floor:
+    def __init__(self, floor, manager):
+        self.floor = floor
+        self.manager = manager
+        self.up_users = []
+        self.up_request = False
+        self.down_users = []
+        self.down_request = False
+
+    def enter_floor(self, user):
+        if user.choose_direction() == 'UP':
+            self.up_users.append(user)
+            if not self.up_request:
+                self.up_request = True
+                self.manager.elevator_request(self.floor, Operation.UP)
         else:
-            self.request_direction = Direction.DOWN
-        self.elevator_manager.receive_request(self)
+            self.down_users.append(user)
+            if not self.down_request:
+                self.down_request = True
+                self.manager.elevator_request(self.floor, Operation.DOWN)
 
-    def notify_pick_up(self, elevator):
-        self.onboard = elevator
-        print("Which floor would you like to go?")
-        floor = int(input())
-        self.request_floor = floor
-        self.onboard.move()
-
-    def notify_arrival(self):
-        print("Arrived!")
-        self.floor = self.request_floor
-        self.onboard = None
-        self.request_floor = None
-        self.request_direction = None
+    def arrival(self, elevator):
+        if elevator.state == Operation.UP:
+            for user in self.up_users:
+                user.choose_dest(elevator)
+                elevator.passangers.append(user)
+            self.up_users = []
+            self.up_request = False
+        else:
+            for user in self.down_users:
+                user.choose_dest(elevator)
+                elevator.passangers.append(user)
+            self.down_users = []
+            self.down_request = False
 
 
 class Elevator:
-    def __init__(self, floor, elevator_manager):
+    def __init__(self, floor, manager):
         self.floor = floor
-        self.elevator_manager = elevator_manager
-        self.state = Direction.IDLE
-        self.dest = None
-        self.passanger = None
+        self.manager = manager
+        self.state = Operation.IDLE
+        self.passangers = set()
+        self.stops = set()
 
-    def start_pick_up(self, user):
-        self.dest = user.floor
-        if self.floor <= user.floor:
-            self.state = Direction.UP
+    def init_request(self, dest, direction):
+        self.floor = dest
+        self.manager.notify_arrival(self)
+        self.state = direction
+        if self.state == Operation.UP:
+            self.move_up()
         else:
-            self.state = Direction.DOWN
-        timer = Timer(abs(self.floor - self.dest), self.pick_up, (user, ))
-        timer.start()
+            self.move_down()
 
-    def pick_up(self, user):
-        self.floor = self.dest
-        self.dest = None
-        self.state = user.request_direction
-        self.passanger = user
-        self.passanger.notify_pick_up(self)
+    def add_request(self, dest):
+        self.stops.add(dest)
 
-    def move(self):
-        self.dest = self.passanger.request_floor
-        timer = Timer(
-            abs(self.floor - self.dest), self.arrive)
-        timer.start()
+    def move_up(self):
+        self.floor += 1
+        if self.floor in self.stops:
+            self.manager.notify_arrival(self)
+            for passanger in self.passangers:
+                if passanger.dest == self.floor:
+                    passanger.arrive(self.floor)
+                    self.passangers.remove(passanger)
+            self.stops.remove(self.floor)
+        if self.stops:
+            self.move_up()
+        else:
+            self.state = Operation.IDLE
+            self.manager.notify_idle(self)
 
-    def arrive(self):
-        self.floor = self.passanger.request_floor
-        self.passanger.notify_arrival()
-        self.dest = None
-        self.passanger = None
-        self.state = Direction.IDLE
-        self.elevator_manager.notify_idle(self)
+    def move_down(self):
+        self.floor -= 1
+        if self.floor in self.stops:
+            self.manager.notify_arrival(self)
+            for passanger in self.passangers:
+                if passanger.dest == self.floor:
+                    passanger.arrive(self.floor)
+                    self.passangers.remove(passanger)
+            self.stops.remove(self.floor)
+        if self.stops:
+            self.move_down()
+        else:
+            self.state = Operation.IDLE
+            self.manager.notify_idle(self)
 
 
-class ElevatorManager:
+class Manager:
     def __init__(self):
+        self.num_floors = 10
         self.num_elevators = 3
+        self.num_users = 5
         self.elevators = []
-        for _ in range(self.num_elevators):
-            elevator = Elevator(random.randint(1, 10), self)
-            self.elevators.append(elevator)
-        self.pooled_users = deque()
+        self.floors = []
+        self.pooled_requests = deque()
 
-    def receive_request(self, user):
+        for _ in range(self.num_elevators):
+            elevator = Elevator(random.randint(1, self.num_floors), self)
+            self.elevators.append(elevator)
+
+        for i in range(1, self.num_floors+1):
+            floor = Floor(i, self)
+            self.floors.append(floor)
+
+        for i in range(self.num_users):
+            self.floors[0].enter_floor(User(1))
+
+    def elevator_request(self, floor, direction):
         candid = None
         for elevator in self.elevators:
-            if elevator.state == Direction.IDLE:
-                if not candid or abs(elevator.floor - user.floor) < abs(candid.floor - user.floor):
+            if elevator.state == Operation.IDLE:
+                if not candid or abs(elevator.floor - floor) < abs(candid.floor - floor):
                     candid = elevator
+            elif elevator.state == Operation.UP and direction == Operation.UP:
+                if floor >= elevator.floor:
+                    if not candid or abs(elevator.floor - floor) < abs(candid.floor - floor):
+                        candid = Elevator
+            elif elevator.state == Operation.DOWN and direction == Operation.DOWN:
+                if floor <= elevator.floor:
+                    if not candid or abs(elevator.floor - floor) < abs(candid.floor - floor):
+                        candid = Elevator
         if not candid:
-            print('pooled!')
-            self.pooled_users.append(user)
+            self.pooled_requests.append((floor, direction))
         else:
-            candid.start_pick_up(user)
+            if candid.state == Operation.IDLE:
+                candid.init_request(floor, direction)
+            else:
+                candid.add_request(floor)
+
+    def notify_arrival(self, elevator):
+        self.floors[elevator.floor-1].arrival(elevator)
 
     def notify_idle(self, elevator):
-        if self.pooled_users:
-            waiting_user = self.pooled_users.popleft()
-            elevator.start_pick_up(waiting_user)
-
-
-elevator_manager = ElevatorManager()
-user = User(1, elevator_manager)
-user.request_elevator()
+        if self.pooled_requests:
+            floor, direction = self.pooled_requests.popleft()
+            elevator.init_request(floor, direction)
