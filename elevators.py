@@ -2,7 +2,6 @@
 import random
 from collections import deque
 from enum import Enum
-from threading import Timer
 
 
 class Operation(Enum):
