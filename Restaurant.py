@@ -1,10 +1,3 @@
-import sys
-
-
-def str_to_class(classname):
-    return getattr(sys.modules[__name__], classname)
-
-
 class Item:
     def __init__(self, name):
         self.name = name
@@ -21,12 +14,12 @@ class Burger(Item):
 
 class Fries(Item):
     def __init__(self):
-        super(Fries, self).__init__('Fries')
+        super().__init__('Fries')
 
 
 class Shake(Item):
     def __init__(self):
-        super(Shake, self).__init__('Shake')
+        super().__init__('Shake')
 
 
 class Menu:
