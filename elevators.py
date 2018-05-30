@@ -16,12 +16,10 @@ class User:
         self.dest = None
 
     def choose_direction(self):
-        print("Choose UP or DOWN")
         UP_OR_DOWN = input()
         return UP_OR_DOWN
 
     def choose_dest(self, elevator):
-        print("Which floor to go?")
         dest = int(input())
         self.dest = dest
         elevator.add_request(dest)
@@ -41,6 +39,7 @@ class Floor:
         self.down_request = False
 
     def enter_floor(self, user):
+        print("Choose UP or DOWN")
         if user.choose_direction() == 'UP':
             self.up_users.append(user)
             if not self.up_request:
@@ -53,6 +52,7 @@ class Floor:
                 self.manager.elevator_request(self.floor, Operation.DOWN)
 
     def arrival(self, elevator):
+        print("Which floor to go?")
         if elevator.state == Operation.UP:
             for user in self.up_users:
                 user.choose_dest(elevator)
