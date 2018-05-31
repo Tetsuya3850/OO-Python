@@ -1,6 +1,6 @@
 # Sells three drinks. Coke, Sprite, Water.
 # Each cost 1 (dollars)
-
+# TODO: Differ the cost of each drink. User can insert various coins and get a change.
 
 from abc import ABCMeta, abstractmethod
 
@@ -31,12 +31,10 @@ class VendorMachine:
         return self.drinks[id-1].pop()
 
     def show_availability(self):
-        if self.drinks[0]:
-            print('Coke available, set 1 to buy.')
-        if self.drinks[1]:
-            print('Sprite available, set 2 to buy.')
-        if self.drinks[2]:
-            print('Water available, set 3 to buy.')
+        for i in range(len(self.drinks)):
+            if len(self.drinks[i]) > 0:
+                print('{0} available, set {1} to buy.'.format(
+                    self.drinks[i][0].name, i+1))
 
     def is_sold_out(self):
         sold_out = True
