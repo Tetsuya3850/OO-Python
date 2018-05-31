@@ -1,6 +1,6 @@
 # Sells three drinks. Coke, Sprite, Water.
 # Each cost 1 (dollars)
-# TODO: Differ the cost of each drink. User can insert various coins and get a change.
+# TODO: Differ the cost of each drink. User can insert various coins and get a change. Refill.
 
 from abc import ABCMeta, abstractmethod
 
