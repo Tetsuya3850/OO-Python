@@ -1,6 +1,7 @@
 # Parking for Cars and Bikes
 # 3F with 10 slots each
 # 2 bike spots and 8 car spots. Bike can stop on cart spot.
+# TODO: Charging money, parking ticket. Show availability.
 
 from enum import Enum
 
