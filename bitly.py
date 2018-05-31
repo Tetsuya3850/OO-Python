@@ -15,6 +15,7 @@ class Service:
 
     def retrieve(self, key):
         url = self.url_table[key]
+        self.access_table[key] += 1
         open(url)
 
 

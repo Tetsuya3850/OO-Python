@@ -11,7 +11,7 @@ class StockData:
         self.observers.append(observer)
 
     def remove_observer(self, observer):
-        pass
+        self.observers.remove(observer)
 
     def notity_observers(self):
         for observer in self.observers:
@@ -25,12 +25,20 @@ class StockData:
         self.notity_observers()
 
 
-class MaxMinStockDisplay:
+class StockDisplay:
     def __init__(self, stock_data):
-        self.max = None
-        self.min = None
         self.stock_data = stock_data
         stock_data.add_observer(self)
+
+    def unsubscribe(self):
+        self.stock_data.remove_observer(self)
+
+
+class MaxMinStockDisplay(StockDisplay):
+    def __init__(self, stock_data):
+        super().__init__(stock_data)
+        self.max = None
+        self.min = None
 
     def update(self):
         self.max = self.stock_data.max
@@ -41,12 +49,11 @@ class MaxMinStockDisplay:
         print("Stock max is {0}, min is {1}".format(self.max, self.min))
 
 
-class StartEndStockDisplay:
+class StartEndStockDisplay(StockDisplay):
     def __init__(self, stock_data):
+        super().__init__(stock_data)
         self.start = None
         self.end = None
-        self.stock_data = stock_data
-        stock_data.add_observer(self)
 
     def update(self):
         self.start = self.stock_data.start
