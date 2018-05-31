@@ -11,15 +11,15 @@ class Service:
     def shorten(self, url):
         key = str(uuid4())
         self.url_table[key] = url
+        print("Here is the key for {0}, {1}".format(url, key))
         return key
 
     def retrieve(self, key):
         url = self.url_table[key]
         self.access_table[key] += 1
-        open(url)
+        print('Open {0}'.format(url))
 
 
 service = Service()
-key = service.shorten(
-    'https://www.careercup.com/page?pid=object-oriented-design-interview-questions')
+key = service.shorten('https://scholar.google.com/')
 service.retrieve(key)
