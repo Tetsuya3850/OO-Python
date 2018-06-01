@@ -50,14 +50,13 @@ class WebCrawler:
     def search(self):
         print("What to search?")
         qs = input()
-        if self.cache.in_cache(qs):
-            match = self.cache.retrieve_cache(qs)
-        else:
-            match = self.index.query(qs)
-            self.cache.add_cache(qs, match)
-        if not match:
+        result = self.cache.retrieve_cache(qs)
+        if result == False:
+            result = self.index.query(qs)
+            self.cache.add_cache(qs, result)
+        if not result:
             print("No match")
-        for id in match:
+        for id in result:
             print(self.info.document[id])
 
 
@@ -115,11 +114,10 @@ class CacheService:
     def add_cache(self, qs, result):
         self.cache[qs] = result
 
-    def in_cache(self, qs):
-        return qs in self.cache
-
     def retrieve_cache(self, qs):
-        return self.cache[qs]
+        if qs in self.cache:
+            return self.cache[qs]
+        return False
 
 
 crawler = WebCrawler()
