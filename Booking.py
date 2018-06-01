@@ -49,8 +49,10 @@ class Service:
             print("ID: {0} In {1}, {2}, {3}, we are available at {4}".format(i,
                                                                              day.year, day.month, day.day, day.available))
 
-    def request_booking(self, name):
+    def request_booking(self, name=None):
         self.show_availability()
+        print("Hi, what is your name?")
+        name = input()
         print("What day are you looking for? Choose by ID")
         id = int(input())
         print("When do you want to start?")
@@ -79,5 +81,5 @@ class Service:
 
 
 service = Service()
-service.request_booking("Tetsuya")
+service.request_booking()
 service.show_availability()
