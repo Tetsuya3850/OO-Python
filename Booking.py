@@ -1,5 +1,15 @@
 
 import datetime
+from uuid import uuid4
+from collections import defaultdict
+
+
+class Reservation:
+    def __init__(self, name, start, end):
+        self.id = uuid4()
+        self.name = name
+        self.start = start
+        self.end = end
 
 
 class Day:
@@ -31,6 +41,7 @@ class Service:
         year, month, day = str(datetime.date.today()).split('-')
         self.week = [Day(int(year), int(month), int(day)+i)
                      for i in range(1, 7)]
+        self.books = defaultdict()
 
     def show_availability(self):
         for i in range(len(self.week)):
@@ -38,7 +49,7 @@ class Service:
             print("ID: {0} In {1}, {2}, {3}, we are available at {4}".format(i,
                                                                              day.year, day.month, day.day, day.available))
 
-    def request_booking(self):
+    def request_booking(self, name):
         self.show_availability()
         print("What day are you looking for? Choose by ID")
         id = int(input())
@@ -48,17 +59,25 @@ class Service:
         end = int(input())
         if not 0 <= id < len(self.week) or start < 10 or end > 17 or start > end:
             print("Invalid input! Try again!")
-            self.request_booking()
+            self.request_booking(name)
         result = self.week[id].book_if_available(start, end)
         if result:
-            print("Booked!")
+            new_reservation = Reservation(name, start, end)
+            self.books[new_reservation.id] = new_reservation
+            print("Booked! Here is your reservation id. {0}".format(
+                new_reservation.id))
         else:
             print("Sorry, that time was just taken. Want to try another time? Yes or No.")
             again = input()
             if again.lower() == 'yes':
-                self.request_booking()
+                self.request_booking(name)
+
+    def next_day(self):
+        self.week.pop(0)
+        last_day = self.week[-1]
+        self.week.append(Day(last_day.year, last_day.month, last_day.day+1))
 
 
 service = Service()
-service.request_booking()
+service.request_booking("Tetsuya")
 service.show_availability()
