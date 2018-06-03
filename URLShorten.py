@@ -1,7 +1,6 @@
 
 from collections import defaultdict, Counter
-from uuid import uuid4
-from random import choice
+from random import choice, randrange
 
 
 class Proxy:
@@ -44,8 +43,17 @@ class WriteService:
     def __init__(self, db):
         self.db = db
 
+    def key_generator(self):
+        string = 'abcdefghijklmnopqrstuvwxyz0123456789'
+        result = []
+        for _ in range(7):
+            result.append(string[randrange(len(string))])
+        return "".join(result)
+
     def shorten(self, url):
-        key = str(uuid4())
+        key = self.key_generator()
+        while key in self.db.url_table:
+            key = self.key_generator()
         self.db.url_table[key] = url
         print("Here is the key for {0}, {1}".format(url, key))
         return key
